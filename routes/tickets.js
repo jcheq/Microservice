@@ -31,7 +31,7 @@ router.put('/:id', auth, async (req, res) => {
   const { title, description, status, assignedTo } = req.body;
   try {
     let ticket = await Ticket.findById(req.params.id);
-    console.log(req.params.id);
+    
     if (!ticket) return res.status(404).json({ msg: 'Ticket not found' });
 
     ticket = await Ticket.findByIdAndUpdate(req.params.id, {
@@ -63,7 +63,15 @@ router.get('/', auth, async (req, res) => {
 router.delete('/:id', auth, async (req, res) => {
     try {
         const ticket = await Ticket.findById(req.params.id);
-        res.json(ticket);
+
+        if (!ticket) return res.status(404).json({ msg: 'Ticket not found' });
+
+        if (ticket.user_id !== req.user_id && req.user.role !== 'admin') {
+            return res.status(401).json({ msg: 'User not authorized' });
+        } 
+        await ticket.collection.deleteOne();
+        return res.status(401).json({ msg: 'Ticket deleted' });
+    
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
